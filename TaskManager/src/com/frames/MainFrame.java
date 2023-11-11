@@ -2,9 +2,9 @@ package com.frames;
 
 import Weather.WeatherApp;
 import com.frames.Clase_label.TextBubbleBorder;
-import com.logic.List;
-import com.logic.Nodo;
-import com.logic.Note;
+import com.util.List;
+import com.util.Nodo;
+import com.logic.Task;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
@@ -16,14 +16,19 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import javax.imageio.ImageIO;
 import javax.swing.DefaultListModel;
+import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import javax.swing.border.AbstractBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import org.json.simple.JSONObject;
+import com.logic.Files;
+import static com.logic.Files.createFile;
+
 
 /**
  *
@@ -32,9 +37,9 @@ import org.json.simple.JSONObject;
 public class MainFrame extends javax.swing.JFrame {
     private JSONObject weatherData = WeatherApp.getWeatherData ();
     int xMouse, yMouse;
-    Note temp;
-    List nodoneLs = new List();
-    List doneLs = new List();;
+    Task temp;
+    List todoLs = new List();
+    List doneLs = new List();
 
     DefaultListModel todomodel = new DefaultListModel();
     DefaultListModel donemodel = new DefaultListModel();
@@ -48,6 +53,8 @@ public class MainFrame extends javax.swing.JFrame {
         initComponents();
         ToDoLs.setModel(todomodel);
         DoneLs.setModel(donemodel);
+        loadTask();
+        
     }
     
     @SuppressWarnings("unchecked")
@@ -55,11 +62,11 @@ public class MainFrame extends javax.swing.JFrame {
     private void initComponents() {
 
         todoPopupMenu = new javax.swing.JPopupMenu();
-        todoDone = new javax.swing.JMenuItem();
-        todoDelate = new javax.swing.JMenuItem();
+        todoDone = new javax.swing.JMenuItem("Done", getIcon("/com/images/done.png",25,25));
+        todoDelate = new javax.swing.JMenuItem("Delate", getIcon("/com/images/delate.png",25,25) );
         donePopupMenu = new javax.swing.JPopupMenu();
-        doneDelate = new javax.swing.JMenuItem();
-        doneRestore = new javax.swing.JMenuItem();
+        doneDelate = new javax.swing.JMenuItem("Delate", getIcon("/com/images/delate.png",25,25));
+        doneRestore = new javax.swing.JMenuItem("Restore", getIcon("/com/images/restore.png",25,25));
         setResizable(false);
         Bg = new javax.swing.JPanel();
         AbstractBorder brdrWlm = new TextBubbleBorder(new java.awt.Color(31, 43, 55),2,11,9,false);
@@ -68,7 +75,7 @@ public class MainFrame extends javax.swing.JFrame {
         AbstractBorder brdrAccp = new TextBubbleBorder(new java.awt.Color(0, 74, 173),3,11,3,false);
         AccpBm = new javax.swing.JPanel();
         AccpLb = new javax.swing.JLabel();
-        weatherConditionImage = new javax.swing.JLabel(loadImage("src/assets/cloudy.png"));
+        weatherConditionImage = new javax.swing.JLabel(loadImage("src/assets/clear.png"));
         CityTx = new javax.swing.JLabel();
         temperatureTx = new javax.swing.JLabel();
         Separador = new javax.swing.JPanel();
@@ -86,17 +93,30 @@ public class MainFrame extends javax.swing.JFrame {
         TxInfoPn = new javax.swing.JPanel();
         InfoLb = new javax.swing.JLabel();
 
+        todoPopupMenu.setBackground(new java.awt.Color(48, 51, 71));
+        todoPopupMenu.setForeground(new java.awt.Color(48, 51, 71));
+        todoPopupMenu.setAlignmentY(4.0F);
+        todoPopupMenu.setMaximumSize(new java.awt.Dimension(2, 40));
+        todoPopupMenu.setMinimumSize(new java.awt.Dimension(2, 15));
+        todoPopupMenu.setPreferredSize(null);
+
         todoPopupMenu.add(todoDone);
+        todoPopupMenu.addSeparator();
         todoPopupMenu.add(todoDelate);
 
-        todoDone.setText("Done");
+        todoDone.setBackground(new java.awt.Color(48, 51, 71));
+        todoDone.setFont(new java.awt.Font("League Spartan", 1, 14)); // NOI18N
+        todoDone.setForeground(new java.awt.Color(48, 51, 71));
+        todoDone.setToolTipText("");
+        todoDone.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(48, 51, 71)));
+        todoDone.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         todoDone.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 int selectedIndex = ToDoLs.getSelectedIndex();
                 String selectedTitle = ToDoLs.getSelectedValue();
 
                 if (selectedIndex >= 0) {
-                    Note doneNote = nodoneLs.DoneNote(selectedTitle);
+                    com.logic.Task doneNote = todoLs.DoneNote(selectedTitle);
 
                     if (doneNote != null) {
                         doneLs.insert(doneNote);
@@ -104,32 +124,87 @@ public class MainFrame extends javax.swing.JFrame {
 
                     // Eliminar el elemento de "To Do" en la interfaz gráfica
                     todomodel.remove(selectedIndex);
-                    nodoneLs.deleteByTitle(selectedTitle);
+                    todoLs.deleteByTitle(selectedTitle);
                     donemodel.addElement(selectedTitle);
+
+                    // Cambia el estado de la informacion
+                    doneLs.setDone(selectedTitle);
+                    Files.chanceDone(selectedTitle);
 
                 }
             }
         });
 
-        todoDelate.setText("Delate");
+        todoDelate.setBackground(new java.awt.Color(48, 51, 71));
+        todoDelate.setFont(new java.awt.Font("League Spartan", 1, 14)); // NOI18N
+        todoDelate.setForeground(new java.awt.Color(48, 51, 71));
+        todoDelate.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(48, 51, 71)));
+        todoDelate.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        todoDelate.setPreferredSize(null);
         todoDelate.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 int selectedIndex = ToDoLs.getSelectedIndex();
                 String selectedTitle = ToDoLs.getSelectedValue();
                 if (selectedIndex >= 0) {
                     todomodel.remove(selectedIndex);
-                    nodoneLs.deleteByTitle(selectedTitle);
+                    todoLs.deleteByTitle(selectedTitle);
                     //updateLists();
                 }
             }
         });
 
+        donePopupMenu.setPopupSize(null);
+
         donePopupMenu.add(doneDelate);
+        donePopupMenu.addSeparator();
         donePopupMenu.add(doneRestore);
 
-        doneDelate.setText("jMenuItem1");
+        doneDelate.setBackground(new java.awt.Color(48, 51, 71));
+        doneDelate.setFont(new java.awt.Font("League Spartan", 1, 14)); // NOI18N
+        doneDelate.setForeground(new java.awt.Color(48, 51, 71));
+        doneDelate.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(48, 51, 71)));
+        doneDelate.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        doneDelate.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                int selectedIndex = DoneLs.getSelectedIndex();
+                String selectedTitle = DoneLs.getSelectedValue();
+                if (selectedIndex >= 0) {
+                    donemodel.remove(selectedIndex);
+                    doneLs.deleteByTitle(selectedTitle);
+                    //updateLists();
+                }
+            }
+        });
 
-        doneRestore.setText("jMenuItem2");
+        doneRestore.setBackground(new java.awt.Color(48, 51, 71));
+        doneRestore.setFont(new java.awt.Font("League Spartan", 1, 14)); // NOI18N
+        doneRestore.setForeground(new java.awt.Color(48, 51, 71));
+        doneRestore.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(48, 51, 71)));
+        doneRestore.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        doneRestore.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                int selectedIndex = DoneLs.getSelectedIndex();
+                String selectedTitle = DoneLs.getSelectedValue();
+
+                if (selectedIndex >= 0) {
+                    com.logic.Task nodoneNote = doneLs.DoneNote(selectedTitle);
+
+                    if (nodoneNote != null) {
+                        todoLs.insert(nodoneNote);
+                    }
+
+                    // Eliminar el elemento de "To Do" en la interfaz gráfica
+                    donemodel.remove(selectedIndex);
+                    doneLs.deleteByTitle(selectedTitle);
+                    todomodel.addElement(selectedTitle);
+
+                    // Cambia el estado de la informacion
+                    todoLs.setToDo(selectedTitle);
+                    Files.chanceTodo(selectedTitle);
+
+                }
+            }
+        });
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
@@ -257,19 +332,20 @@ public class MainFrame extends javax.swing.JFrame {
         WlmPanel.setBorder(brdrWlm);
 
         Separador.setBackground(new java.awt.Color(24, 110, 225));
+        Separador.setPreferredSize(new java.awt.Dimension(5, 570));
 
         javax.swing.GroupLayout SeparadorLayout = new javax.swing.GroupLayout(Separador);
         Separador.setLayout(SeparadorLayout);
         SeparadorLayout.setHorizontalGroup(
             SeparadorLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 10, Short.MAX_VALUE)
+            .addGap(0, 5, Short.MAX_VALUE)
         );
         SeparadorLayout.setVerticalGroup(
             SeparadorLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGap(0, 570, Short.MAX_VALUE)
         );
 
-        Bg.add(Separador, new org.netbeans.lib.awtextra.AbsoluteConstraints(930, 40, 10, 570));
+        Bg.add(Separador, new org.netbeans.lib.awtextra.AbsoluteConstraints(930, 50, 5, 570));
 
         ExtBm.setBackground(new java.awt.Color(48, 51, 71));
         ExtBm.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
@@ -334,9 +410,9 @@ public class MainFrame extends javax.swing.JFrame {
             .addGroup(headerLayout.createSequentialGroup()
                 .addGap(402, 402, 402)
                 .addComponent(TodoLb)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 472, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 480, Short.MAX_VALUE)
                 .addComponent(FinLb)
-                .addGap(87, 87, 87))
+                .addGap(79, 79, 79))
         );
         headerLayout.setVerticalGroup(
             headerLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -361,7 +437,20 @@ public class MainFrame extends javax.swing.JFrame {
         DoneScPn.setViewportView(DoneLs);
         DoneScPn.setBorder(brdrLst);
 
-        Bg.add(DoneScPn, new org.netbeans.lib.awtextra.AbsoluteConstraints(950, 50, 220, 560));
+        DoneLs.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (SwingUtilities.isRightMouseButton(e)) {
+                    int index = DoneLs.locationToIndex(e.getPoint());
+                    if (index >= 0) {
+                        DoneLs.setSelectedIndex(index);
+                        donePopupMenu.show(DoneLs, e.getX(), e.getY());
+                    }
+                }
+            }
+        });
+
+        Bg.add(DoneScPn, new org.netbeans.lib.awtextra.AbsoluteConstraints(950, 50, 210, 560));
 
         ToDoLs.setBackground(new java.awt.Color(31, 43, 55));
         ToDoLs.setFont(new java.awt.Font("League Spartan", 1, 24)); // NOI18N
@@ -371,6 +460,7 @@ public class MainFrame extends javax.swing.JFrame {
             public int getSize() { return strings.length; }
             public String getElementAt(int i) { return strings[i]; }
         });
+        ToDoLs.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
         ToDoLs.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 ToDoLsMouseClicked(evt);
@@ -385,7 +475,7 @@ public class MainFrame extends javax.swing.JFrame {
                     String selectedTitle = ToDoLs.getSelectedValue();
 
                     // Realizar la búsqueda de información en tu lista enlazada o en donde la tengas almacenada
-                    Note aux = nodoneLs.findNote(selectedTitle);
+                    com.logic.Task aux = todoLs.findNote(selectedTitle);
 
                     // Actualizar el contenido de InfoLb con la información correspondiente
                     if (aux != null) {
@@ -418,32 +508,33 @@ public class MainFrame extends javax.swing.JFrame {
         InfoLb.setFont(new java.awt.Font("League Spartan", 0, 24)); // NOI18N
         InfoLb.setForeground(new java.awt.Color(255, 255, 255));
         InfoLb.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
-        Note aux = nodoneLs.findNote(" ");
+        com.logic.Task aux = todoLs.findNote(" ");
         String Tinfo= " ";
         if(aux!=null){
             Tinfo=aux.getinfo();
         }
         InfoLb.setText(Tinfo);
         InfoLb.setVerticalAlignment(javax.swing.SwingConstants.TOP);
+        InfoLb.setAutoscrolls(true);
 
         javax.swing.GroupLayout TxInfoPnLayout = new javax.swing.GroupLayout(TxInfoPn);
         TxInfoPn.setLayout(TxInfoPnLayout);
         TxInfoPnLayout.setHorizontalGroup(
             TxInfoPnLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(TxInfoPnLayout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(InfoLb, javax.swing.GroupLayout.DEFAULT_SIZE, 268, Short.MAX_VALUE)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, TxInfoPnLayout.createSequentialGroup()
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(InfoLb, javax.swing.GroupLayout.PREFERRED_SIZE, 268, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
         TxInfoPnLayout.setVerticalGroup(
             TxInfoPnLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(TxInfoPnLayout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(InfoLb, javax.swing.GroupLayout.DEFAULT_SIZE, 568, Short.MAX_VALUE)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, TxInfoPnLayout.createSequentialGroup()
+                .addContainerGap(14, Short.MAX_VALUE)
+                .addComponent(InfoLb, javax.swing.GroupLayout.PREFERRED_SIZE, 530, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
 
-        Bg.add(TxInfoPn, new org.netbeans.lib.awtextra.AbsoluteConstraints(630, 50, 280, 580));
+        Bg.add(TxInfoPn, new org.netbeans.lib.awtextra.AbsoluteConstraints(630, 60, 280, 550));
         TxInfoPn.setBorder(brdrTxInf);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
@@ -454,7 +545,7 @@ public class MainFrame extends javax.swing.JFrame {
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(Bg, javax.swing.GroupLayout.DEFAULT_SIZE, 651, Short.MAX_VALUE)
+            .addComponent(Bg, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
 
         pack();
@@ -501,9 +592,9 @@ public class MainFrame extends javax.swing.JFrame {
       
     }//GEN-LAST:event_ToDoLsMouseClicked
 
-private void updateLists() {
+    private void updateLists() {
     // Actualiza la lista "To Do" (ToDoLs)
-    String[] toDoItems = nodoneLs.titles();
+    String[] toDoItems = todoLs.titles();
     DefaultListModel<String> toDoModel = new DefaultListModel<>();
 
     if (toDoItems != null) {
@@ -525,14 +616,34 @@ private void updateLists() {
     }
 
     DoneLs.setModel(doneModel);
-}
-
-
-    void addTx(String title, String info) {
-        temp = new Note(title,info);
-        nodoneLs.insert(temp);
-        todomodel.addElement(temp.gettitle());
     }
+        // Cambiar nombre en caso de titulos iguales
+
+    String sameTitle (String title) {
+        if (todoLs.findNote(title.trim())!= null) {
+            String aux = title.trim();
+            int i = 1;
+            while (true) {
+                title =aux + " " + i;
+                if (todoLs.findNote(title.trim())== null){
+                    break;
+                }
+                i+=1;
+            }
+        }
+        return title;
+    }
+    
+    void addTx(String title, String info) {
+        title= sameTitle(title);
+        temp = new Task(title.trim(),info,false);
+        todoLs.insert(temp);
+        todomodel.addElement(temp.gettitle());
+        // Escribe la tarea en el archivo temporal
+        Files.writeFileText(temp);
+    }
+    
+    
     /**
      * @param args the command line arguments
      */
@@ -579,7 +690,44 @@ private void updateLists() {
         return null;
     }
     
+    public Icon getIcon (String path, int width, int height) {
+        Icon image = new ImageIcon (new ImageIcon(getClass().getResource(path)).getImage().getScaledInstance(width, height,0));
+        return image;
+    }
+    
+    /////////////////////////////////////////////////////////////////////////////////
+    public void loadTask () {
+        createFile();
+        String temp;
+        
+        todoLs = Files.getTodoLs();
+        
+        Nodo current = todoLs.getRoot();
+        
+        while (current != null) {
+            temp = current.getCont().gettitle();
+            todomodel.addElement(temp);
+            
+            current = current.getNext();
+            }
 
+        
+        
+        // Recorrer Lista e ir agregando los models
+         doneLs = Files.getDoneLs();
+         
+         Nodo current2 = doneLs.getRoot();
+         
+        while (current2 != null) {
+            temp = current2.getCont().gettitle();
+            donemodel.addElement(temp);
+
+            // Mueve al siguiente nodo
+            current2 = current2.getNext();
+        }
+  
+    }
+  
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel AccpBm;
     private javax.swing.JLabel AccpLb;

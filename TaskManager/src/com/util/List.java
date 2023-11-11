@@ -1,4 +1,7 @@
-package com.logic;
+package com.util;
+
+import com.logic.Task;
+import com.util.Nodo;
 
 public class List {
     private Nodo root;
@@ -12,7 +15,7 @@ public class List {
         return root == null;
     }
 
-    public void insert(Note note) {
+    public void insert(Task note) {
         Nodo newnodo = new Nodo(note);
         cant += 1;
         if (isEmpty()) {
@@ -62,13 +65,13 @@ public class List {
         }
     }
 
-    public Note DoneNote(String titleToFind) {
+    public Task DoneNote(String titleToFind) {
         if (isEmpty()) {
             return null;
         }
         if (root.getCont().gettitle().equals(titleToFind)) {
             cant -= 1;
-            Note doneNote = root.getCont();
+            Task doneNote = root.getCont();
             root = root.getNext();
             return doneNote;
         }
@@ -76,7 +79,7 @@ public class List {
         while (current.getNext() != null) {
             if (current.getNext().getCont().gettitle().equals(titleToFind)) {
                 cant -= 1;
-                Note doneNote = current.getNext().getCont();
+                Task doneNote = current.getNext().getCont();
                 current.setNext(current.getNext().getNext());
                 return doneNote;
             }
@@ -89,7 +92,7 @@ public class List {
         return root;
     }
 
-    public Note findNote(String titleToFind) {
+    public Task findNote(String titleToFind) {
         if (isEmpty()) {
             return null;
         }
@@ -105,6 +108,33 @@ public class List {
 
         // Si no se encontró la nota, se devuelve null
         return null;
+    }
+    
+    public void muestra(){
+        Nodo temp;		
+            if (!isEmpty()){
+		temp=this.root;
+		while (temp!=null){
+                    System.out.println("Elemento " + temp.getCont().gettitle());
+                    temp=temp.getNext();
+		}			
+            }else{
+		System.out.println("Error muestra. Lista vacia");
+	}		
+    }
+    
+    /*
+    Aqui hay que completar estos 2 metodos
+    El primero busca la tarea que coincide con el titulo y cambia atributos status a 1, con el metodo setDone();
+    El segundo haria lo mismo solo que cambiaria el status a 0, con el metodo setTodo();
+    */
+
+    public void setDone(String selectedTitle) {
+        
+    }
+
+    public void setToDo(String selectedTitle) {
+        
     }
 }
 

@@ -2,22 +2,24 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
-package com.logic;
+package com.util;
+
+import com.logic.Task;
 
 /**
  *
  * @author Dante
  */
 public class Nodo {
-    Note cont;
+    Task cont;
     Nodo next;
 
-    public Nodo(Note note) {
+    public Nodo(Task note) {
         cont = note;
         this.next = null;
     }
 
-    public Note getCont() {
+    public Task getCont() {
         return cont;
     }
 
